@@ -1,0 +1,54 @@
+Ciurea Ana-Sorina
+321 - CC
+
+# 1. Routing Logic
+- The routing logic is responsible for determining how to forward packets based on the destination address and available routing information.
+
+# 2. Efficient Longest Prefix Match usign a Trie:
+- A binary trie structure is used to store the routing table.
+- It provides better performance than linear search, especially for large routing tables.
+- Trie traversal is guided bt prefix bits and supports longest prefix match.
+
+# 3. ICMP Protocol:
+- The function *icmp_error* generates an ICMP error message based on the incoming packet (buf). 
+- This ICMP error message can be of two types:
+    -TTL exceeded (Type 11, Code 0)
+    -Destination unreachable (Type 3, Code 0)
+- The function also creates the necessary ethernet, iP, and ICMP headers, fills in the required fields (including the source and destination MAC and IP addresses), copies part of the original packet into the ICMP message, calculates the checksum for the ICMP message, and then sends the generated ICMP error packet back to the source of the original packet.
+
+- The function *icmp_echo_reply* is responsible for generating and sending 
+an ICMP Echo Reply (typically sent by the ping command) back to the source of the request. This function takes in a packet (which contains the Echo Request), processes it, and sends an Echo Reply.
+
+# Main:
+
+- The main function is the entry point for the program and is responsible for initializing the routing and ARP tables, receiving incoming network packets, performing necessary validation and processing, and forwarding or responding to packets appropriately.
+- It is allocates memory for the routing tables(*route_table*) and ARP table(*arp_table*). If the memory allocation fails, the program will exit with and error message.
+- It reads the routing table for the file specifiend in argv[1] and parses the table from the file *arp_table.txt*.
+
+- It creats a trie to facilitate efficient route lookups.
+- The program enters an infinite loop to continuosly receive packets from network interface.
+
+- The packet is received using *recv_from_any_link*, and the interface , the packet and the length are returned
+- If a packet is received, the program checks whether it is an ipv4 packet by analysing the ethernet frame type field (*ox0800*). If it isn't, it ignores the packet.
+
+- After extracting the ip header from the received pacjet, the checksum of the ip header is verified. If the checksum is invalid, the packet is ignored.
+- If the checksum is valid, the original checksum is restored for futher processing.
+- If the protocol is ICMP (protocol type 1), the program checks if it is an Echo Request (type 8) and responds with an Echo Reply (type 0) by calling *icmp_echo_reply*.
+
+- If the ttl in the ip header is less than or equal to 1, it indicates that the packet's lifetime has expired. In this case, the program sends an ICMP Time Exceeded message to the source (using *icmp_error*).
+
+- If the packet’s ttl is still valid, the program attempts to find the best matching route for the destination IP address using the *get_best_route_trie* function, which searches the trie for the most appropriate route.
+
+- If a valid route is found, the TTL is decremented by 1 and the checksum is recalculated for the IP header.
+- The program then looks up the corresponding ARP entry for the next-hop IP address to obtain the MAC address for the next hop.
+
+- Finally, the packet is sent to the appropriate interface using *send_to_link*.
+
+# Requirements resolved:
+- Routing Process (30 points)
+- Efficient Longest Prefix Match - using trie(16 points)
+- ICMP Protocol (21 points)
+- Local checker points : 70
+# References:
+1. Trie structure - for better understanding https://www.youtube.com/watch?v=8tcPbGVVnDo and adapt pieces of code from https://www.tutorialspoint.com/data_structures_algorithms/tries.htm and https://www.hackerearth.com/practice/data-structures/advanced-data-structures/trie-keyword-tree/tutorial/.
+2. Forwording laboratory (4) for the IP forwarding and for finding the best route.
